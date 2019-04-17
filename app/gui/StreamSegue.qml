@@ -32,7 +32,7 @@ Item {
         hintText.visible = false
 
         // Hide the window now that streaming has begun
-        window.visible = false
+        window.hide()
     }
 
     function displayLaunchError(text)
