@@ -100,6 +100,17 @@ unix:!macx {
             CONFIG += mmal
         }
     }
+
+    packagesExist(jsoncpp sigc++-2.0) {
+        DEFINES += HAVE_I3IPC
+
+        INCLUDEPATH += $$PWD/../libs/unix/include
+        SOURCES += \
+            $$PWD/../libs/unix/src/i3ipc++/ipc.cpp \
+            $$PWD/../libs/unix/src/i3ipc++/ipc-util.cpp
+
+        PKGCONFIG += sigc++-2.0 jsoncpp
+    }
 }
 win32 {
     LIBS += -llibssl -llibcrypto -lSDL2 -lSDL2_ttf -lavcodec -lavutil -lopus -ld3dx9
