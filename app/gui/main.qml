@@ -141,14 +141,16 @@ ApplicationWindow {
 
             I3WindowManager.start()
 
-            if (SystemProperties.isRunningWayland) {
-                waylandDialog.open()
-            }
-            else if (SystemProperties.isWow64) {
+            if (SystemProperties.isWow64) {
                 wow64Dialog.open()
             }
             else if (!SystemProperties.hasHardwareAcceleration) {
-                noHwDecoderDialog.open()
+                if (SystemProperties.isRunningXWayland) {
+                    xWaylandDialog.open()
+                }
+                else {
+                    noHwDecoderDialog.open()
+                }
             }
 
             if (SystemProperties.unmappedGamepads) {
@@ -407,9 +409,9 @@ ApplicationWindow {
     }
 
     ErrorMessageDialog {
-        id: waylandDialog
-        text: "Moonlight does not support hardware acceleration on Wayland. Continuing on Wayland may result in poor streaming performance. " +
-              "Please switch to an X session for optimal performance."
+        id: xWaylandDialog
+        text: "Hardware acceleration doesn't work on XWayland. Continuing on XWayland may result in poor streaming performance. " +
+              "Try running with QT_QPA_PLATFORM=wayland or switch to X11."
         helpText: "Click the Help button for more information."
         helpUrl: "https://github.com/moonlight-stream/moonlight-docs/wiki/Fixing-Hardware-Decoding-Problems"
     }
@@ -439,6 +441,29 @@ ApplicationWindow {
         text: "Are you sure you want to quit?"
         // For keyboard/gamepad navigation
         onAccepted: Qt.quit()
+    }
+
+    // HACK: This belongs in StreamSegue but keeping a dialog around after the parent
+    // dies can trigger bugs in Qt 5.12 that cause the app to crash. For now, we will
+    // host this dialog in a QML component that is never destroyed.
+    //
+    // To repro: Start a stream, cut the network connection to trigger the "Connection
+    // terminated" dialog, wait until the app grid times out back to the PC grid, then
+    // try to dismiss the dialog.
+    ErrorMessageDialog {
+        id: streamSegueErrorDialog
+
+        property bool quitAfter: false
+
+        onClosed: {
+            if (quitAfter) {
+                Qt.quit()
+            }
+
+            // StreamSegue assumes its dialog will be re-created each time we
+            // start streaming, so fake it by wiping out the text each time.
+            text = ""
+        }
     }
 
     NavigableDialog {
